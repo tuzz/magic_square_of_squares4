@@ -1,5 +1,10 @@
+#![feature(portable_simd)]
+
 use fxhash::{FxHashSet, FxHashMap};
 use std::collections::VecDeque;
+use std::simd::Simd;
+
+const LANES: usize = 16;
 
 type SquaresVec = Vec<u64>;
 type SumLookup = FxHashSet<u64>;
@@ -16,7 +21,7 @@ fn main() {
         let square = number as u64 * number as u64;
         if square % 24 != 1 { continue; }
 
-        println!("{}: {}", number, square / 2 * 3);
+        //println!("{}: {}", number, square / 2 * 3);
 
         while let Some(partial_sum) = partial_sums_to_check.front() {
             if *partial_sum >= square + 1 { break; }
@@ -35,6 +40,7 @@ fn main() {
 
         let square_residue = square % 72;
         let square_residue_class = (square_residue / 24) as usize;
+        let square_vector = Simd::<u64, LANES>::splat(square);
 
         for (i, squares) in squares_by_residue_class.iter().enumerate() {
             let sum_residue_class = (square_residue_class + i) % 3;
@@ -43,11 +49,25 @@ fn main() {
             let sum_lookup = &sums_by_residue_class[sum_residue_class];
             let complements = &mut sums_by_complement_class[complement_class];
 
-            for &square2 in squares {
-                let partial_sum = square + square2;
+            let chunks = squares.chunks_exact(LANES);
+            let remainder = chunks.remainder();
 
+            for chunk in chunks {
+                let squares2_vector = Simd::from_slice(chunk);
+                let partial_sum_vector = square_vector + squares2_vector;
+
+                for i in 0..LANES {
+                    let partial_sum = partial_sum_vector[i];
+                    if sum_lookup.contains(&partial_sum) {
+                        complements.entry(partial_sum).or_default().push(square);
+                    }
+                }
+            }
+
+            for &square2 in remainder {
+                let partial_sum = square + square2;
                 if sum_lookup.contains(&partial_sum) {
-                    complements.entry(partial_sum).or_default().push(square2);
+                    complements.entry(partial_sum).or_default().push(square);
                 }
             }
         }
@@ -59,5 +79,7 @@ fn main() {
         squares_by_residue_class[square_residue_class].push(square);
         sums_by_residue_class[sum_residue_class].insert(partial_sum);
         partial_sums_to_check.push_back(partial_sum);
+
+        if number > 600_000 { break; }
     }
 }
