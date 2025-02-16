@@ -7,4 +7,4 @@ edition = "2024"
 nohash = "*"
 rayon = "*"
 bincode = "*"
-serde = "*"
+serde = { version = "*", features = ["derive"] }
