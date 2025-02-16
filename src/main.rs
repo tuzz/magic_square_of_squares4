@@ -27,7 +27,7 @@ fn main() {
 
             // println!("{}: {} billion", number, center_square * 3 / 1_000_000_000);
 
-            if center_sum >= square + 1 { break; }
+            if center_sum > square { break; }
             centers_to_check.pop_front();
 
             let center_class = (center_square % 72 / 24) as usize;
@@ -36,7 +36,7 @@ fn main() {
             let sums = &mut sums_by_class[complement_class];
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
 
-            // println!("{} = {}, {:?}", center_square * 3, center, squares);
+            // println!("{} = {}, {:?}", center_square * 3, center, numbers);
         }
 
         let center_sum = square + square;
@@ -48,9 +48,9 @@ fn main() {
         let square_class = (square % 72 / 24) as usize;
         let square_vector = Simd::splat(square);
 
-        for (i, squares) in squares_by_class.iter().enumerate() {
-            let sum_class = (square_class + i) % 3;
-            let sums = &mut sums_by_class[sum_class];
+        sums_by_class.par_iter_mut().enumerate().for_each(|(i, sums)| {
+            let residue_class = (6 - square_class + i) % 3;
+            let squares = &squares_by_class[residue_class];
 
             let chunks = squares.par_chunks_exact(LANES);
             let remainder = chunks.remainder();
@@ -70,7 +70,7 @@ fn main() {
                     vec.lock().unwrap().push(number);
                 }
             }
-        }
+        });
 
         squares_by_class[square_class].push(square);
 
