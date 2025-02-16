@@ -29,8 +29,8 @@ fn main() {
             let center_class = (center_square % 72 / 24) as usize;
             let complement_class = (6 - center_class) % 3;
 
-            let sums = &sums_by_class[complement_class];
-            let Some(squares) = sums.get(&hash(center_sum)) else { continue };
+            let sums = &mut sums_by_class[complement_class];
+            let Some(squares) = sums.remove(&hash(center_sum)) else { continue };
 
             // println!("{} = {}, {:?}", center_square * 3, center, squares);
         }
