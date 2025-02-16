@@ -1,9 +1,11 @@
 #![feature(portable_simd)]
 
 use nohash::NoHashHasher;
+use rayon::prelude::*;
 use std::collections::{HashMap, VecDeque};
 use std::hash::BuildHasherDefault;
 use std::simd::Simd;
+use std::sync::{Arc, Mutex};
 
 const LANES: usize = 64;
 
@@ -23,6 +25,8 @@ fn main() {
             let center_square = center as u64 * center as u64;
             let center_sum = center_square + center_square;
 
+            // println!("{}: {} billion", number, center_square * 3 / 1_000_000_000);
+
             if center_sum >= square + 1 { break; }
             centers_to_check.pop_front();
 
@@ -30,7 +34,7 @@ fn main() {
             let complement_class = (6 - center_class) % 3;
 
             let sums = &mut sums_by_class[complement_class];
-            let Some(squares) = sums.remove(&hash(center_sum)) else { continue };
+            let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
 
             // println!("{} = {}, {:?}", center_square * 3, center, squares);
         }
@@ -38,7 +42,7 @@ fn main() {
         let center_sum = square + square;
         let center_sum_class = (center_sum % 72 / 24) as usize;
 
-        sums_by_class[center_sum_class].insert(hash(center_sum), vec![]);
+        sums_by_class[center_sum_class].insert(hash(center_sum), Arc::new(Mutex::new(vec![])));
         centers_to_check.push_back(number);
 
         let square_class = (square % 72 / 24) as usize;
@@ -48,22 +52,22 @@ fn main() {
             let sum_class = (square_class + i) % 3;
             let sums = &mut sums_by_class[sum_class];
 
-            let chunks = squares.chunks_exact(LANES);
+            let chunks = squares.par_chunks_exact(LANES);
             let remainder = chunks.remainder();
 
-            for chunk in chunks {
+            chunks.for_each(|chunk| {
                 let sum_vector = square_vector + Simd::from_slice(chunk);
                 for hash in parallel_hash(sum_vector).as_array() {
-                    if let Some(vec) = sums.get_mut(hash) {
-                        vec.push(number);
+                    if let Some(vec) = sums.get(hash) {
+                        vec.lock().unwrap().push(number);
                     }
                 }
-            }
+            });
 
             for &square2 in remainder {
                 let sum = square + square2;
                 if let Some(vec) = sums.get_mut(&hash(sum)) {
-                    vec.push(number);
+                    vec.lock().unwrap().push(number);
                 }
             }
         }
