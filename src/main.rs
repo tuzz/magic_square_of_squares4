@@ -11,6 +11,7 @@ use shared_vec::*;
 use std::simd::Simd;
 
 const SIMD_LANES: usize = 64;
+const CHECKPOINT_FREQUENCY: u64 = 10_000_000_000_000;
 
 fn main() {
     let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default();
@@ -71,7 +72,8 @@ fn main() {
         squares_by_class[square_class].push(square);
 
         if square >= next_checkpoint {
-            write_checkpoint(&squares_by_class, &sums_by_class, &centers_to_check, next_checkpoint, number);
+            let reloaded = write_checkpoint(squares_by_class, sums_by_class, centers_to_check, next_checkpoint, number);
+            (squares_by_class, sums_by_class, centers_to_check) = reloaded;
             next_checkpoint += CHECKPOINT_FREQUENCY;
         }
     }
