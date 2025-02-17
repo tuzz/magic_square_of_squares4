@@ -3,7 +3,7 @@ use nohash::NoHashHasher;
 use std::collections::{HashMap, VecDeque};
 use std::hash::BuildHasherDefault;
 use std::fs::{read, write, copy};
-use crate::CHECKPOINT_FREQUENCY;
+use crate::{CHECKPOINT_FREQUENCY, FILTER_BY_PRIMES};
 use crate::shared_vec::*;
 
 type SquaresByClass = [Vec<u64>; 3];
@@ -12,8 +12,10 @@ type CentersToCheck = VecDeque<u32>;
 type NextCheckpoint = u64;
 type NextNumber = u32;
 
+const FILENAME: &str = if FILTER_BY_PRIMES { "checkpoint.filtered.bin" } else { "checkpoint.unfiltered.bin" };
+
 pub fn read_checkpoint_or_default(log: bool) -> (SquaresByClass, SumsByClass, CentersToCheck, NextCheckpoint, NextNumber)  {
-    match read("checkpoint.bin") {
+    match read(FILENAME) {
         Ok(bytes) => {
             let (mut squares, mut sums, mut centers, checkpoint, number): (SquaresByClass, SumsByClass, CentersToCheck, u64, u32) = deserialize(&bytes).unwrap();
             let square = number as u64 * number as u64;
@@ -42,10 +44,10 @@ pub fn read_checkpoint_or_default(log: bool) -> (SquaresByClass, SumsByClass, Ce
 pub fn write_checkpoint(squares_by_class: SquaresByClass, sums_by_class: SumsByClass, centers_to_check: CentersToCheck, next_checkpoint: u64, number: u32) -> (SquaresByClass, SumsByClass, CentersToCheck) {
     print!("Checked all magic sums below {}. ", number as u64 * number as u64);
 
-    let _result = copy("checkpoint.bin", "checkpoint.backup.bin");
+    let _result = copy(FILENAME, format!("{}.backup", FILENAME));
     let bytes = serialize(&(&squares_by_class, &sums_by_class, &centers_to_check, next_checkpoint, number)).unwrap();
 
-    write("checkpoint.bin", &bytes).unwrap();
+    write(FILENAME, &bytes).unwrap();
     let (squares_by_class, sums_by_class, centers_to_check, _, _): (_, _, _, u64, u32) = read_checkpoint_or_default(false);
 
     println!("Wrote checkpoint.");
