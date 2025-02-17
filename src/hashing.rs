@@ -1,4 +1,5 @@
-use crate::*;
+use crate::SIMD_LANES;
+use std::simd::Simd;
 
 const PRIME: u64 = 11400714785074694791;
 const PRIME_VECTOR: Simd::<u64, SIMD_LANES> = Simd::splat(PRIME);

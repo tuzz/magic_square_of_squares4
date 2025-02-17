@@ -1,45 +1,20 @@
 #![feature(portable_simd)]
 
+mod checkpoints;
 mod hashing;
 mod shared_vec;
 
-use nohash::NoHashHasher;
 use rayon::prelude::*;
-use bincode::{serialize, deserialize};
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
+use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
-use std::collections::{HashMap, VecDeque};
-use std::hash::BuildHasherDefault;
 use std::simd::Simd;
 use std::sync::{Arc, Mutex};
-use std::fs::{read, write, copy};
 
 const SIMD_LANES: usize = 64;
-const CHECKPOINTS: u64 = 10_000_000_000_000;
 
 fn main() {
-    let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = match read("checkpoint.bin") {
-        Ok(bytes) => {
-            let (squares, sums, centers, checkpoint, number): (_, _, _, u64, u32) = deserialize(&bytes).unwrap();
-            let square = number as u64 * number as u64;
-            println!("Checked all magic sums below {}. Resumed checkpoint.", square);
-
-            (squares, sums, centers, checkpoint + CHECKPOINTS, number + 1)
-        },
-        Err(_) => {
-            println!("No checkpoint file found. Starting the search from scratch.");
-            let hasher = BuildHasherDefault::<NoHashHasher<u64>>::default();
-            let map = HashMap::with_capacity_and_hasher(1_000_000, hasher);
-            let squares_by_class = [vec![], vec![], vec![]];
-            let sums_by_class = [map.clone(), map.clone(), map];
-            let centers_to_check = VecDeque::new();
-            let next_checkpoint = CHECKPOINTS;
-            let next_number = 1;
-
-            (squares_by_class, sums_by_class, centers_to_check, next_checkpoint, next_number)
-        }
-    };
+    let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default();
 
     for number in next_number.. {
         let square = number as u64 * number as u64;
@@ -98,15 +73,8 @@ fn main() {
         squares_by_class[square_class].push(square);
 
         if square >= next_checkpoint {
-            print!("Checked all magic sums below {}. ", square);
-
-            let _result = copy("checkpoint.bin", "checkpoint.backup.bin");
-            let bytes = serialize(&(&squares_by_class, &sums_by_class, &centers_to_check, next_checkpoint, number)).unwrap();
-
-            write("checkpoint.bin", &bytes).unwrap();
-            println!("Wrote checkpoint.");
-
-            next_checkpoint += CHECKPOINTS;
+            write_checkpoint(&squares_by_class, &sums_by_class, &centers_to_check, next_checkpoint, number);
+            next_checkpoint += CHECKPOINT_FREQUENCY;
         }
     }
 }
