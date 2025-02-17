@@ -1,9 +1,12 @@
 #![feature(portable_simd)]
 
+mod shared_vec;
+
 use nohash::NoHashHasher;
 use rayon::prelude::*;
 use bincode::{serialize, deserialize};
 use serde::{Serialize, Serializer, Deserialize, Deserializer};
+use shared_vec::*;
 use std::collections::{HashMap, VecDeque};
 use std::hash::BuildHasherDefault;
 use std::simd::Simd;
@@ -119,19 +122,4 @@ fn hash(value: u64) -> u64 {
     let round1 = value ^ value.wrapping_shr(33);
     let round2 = round1.wrapping_mul(PRIME);
     round2 ^ round2.wrapping_shr(33)
-}
-
-#[derive(Clone, Default)]
-struct SharedVec(Arc<Mutex<Vec<u32>>>);
-
-impl Serialize for SharedVec {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        self.0.lock().unwrap().serialize(serializer)
-    }
-}
-
-impl<'a> Deserialize<'a> for SharedVec {
-    fn deserialize<D: Deserializer<'a>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(Self(Arc::new(Mutex::new(Vec::deserialize(deserializer).unwrap()))))
-    }
 }
