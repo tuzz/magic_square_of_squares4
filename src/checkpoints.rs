@@ -12,18 +12,29 @@ type CentersToCheck = VecDeque<u32>;
 type NextCheckpoint = u64;
 type NextNumber = u32;
 
-pub fn read_checkpoint_or_default() -> (SquaresByClass, SumsByClass, CentersToCheck, NextCheckpoint, NextNumber)  {
+pub fn read_checkpoint_or_default(log: bool) -> (SquaresByClass, SumsByClass, CentersToCheck, NextCheckpoint, NextNumber)  {
     match read("checkpoint.bin") {
         Ok(bytes) => {
-            let (squares, sums, centers, checkpoint, number): (_, _, _, u64, u32) = deserialize(&bytes).unwrap();
+            let (mut squares, mut sums, mut centers, checkpoint, number): (SquaresByClass, SumsByClass, CentersToCheck, u64, u32) = deserialize(&bytes).unwrap();
             let square = number as u64 * number as u64;
 
-            println!("Checked all magic sums below {}. Resumed checkpoint.", square);
+            squares.iter_mut().for_each(|vec| vec.reserve(1_000_000_usize.saturating_sub(vec.len())));
+            sums.iter_mut().for_each(|map| map.reserve(333_333_usize.saturating_sub(map.len())));
+            centers.reserve(1_000_000_usize.saturating_sub(centers.len()));
+
+            if log { println!("Checked all magic sums below {}. Resumed checkpoint.", square); }
             (squares, sums, centers, checkpoint + CHECKPOINT_FREQUENCY, number + 1)
         },
         Err(_) => {
-            println!("No checkpoint file found. Starting the search from scratch.");
-            (Default::default(), Default::default(), Default::default(), CHECKPOINT_FREQUENCY, 1)
+            let vec = Vec::with_capacity(1_000_000);
+            let map = HashMap::with_capacity_and_hasher(333_333, BuildHasherDefault::<NoHashHasher<u64>>::default());
+
+            let squares_by_class = [vec.clone(), vec.clone(), vec];
+            let sums_by_class = [map.clone(), map.clone(), map];
+            let centers_to_check = VecDeque::with_capacity(1_000_000);
+
+            if log { println!("No checkpoint file found. Starting the search from scratch."); }
+            (squares_by_class, sums_by_class, centers_to_check, CHECKPOINT_FREQUENCY, 1)
         }
     }
 }
@@ -35,7 +46,7 @@ pub fn write_checkpoint(squares_by_class: SquaresByClass, sums_by_class: SumsByC
     let bytes = serialize(&(&squares_by_class, &sums_by_class, &centers_to_check, next_checkpoint, number)).unwrap();
 
     write("checkpoint.bin", &bytes).unwrap();
-    let (squares_by_class, sums_by_class, centers_to_check, _, _): (_, _, _, u64, u32) = deserialize(&bytes).unwrap();
+    let (squares_by_class, sums_by_class, centers_to_check, _, _): (_, _, _, u64, u32) = read_checkpoint_or_default(false);
 
     println!("Wrote checkpoint.");
     (squares_by_class, sums_by_class, centers_to_check)

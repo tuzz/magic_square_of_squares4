@@ -14,7 +14,7 @@ const SIMD_LANES: usize = 64;
 const CHECKPOINT_FREQUENCY: u64 = 10_000_000_000_000;
 
 fn main() {
-    let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default();
+    let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default(true);
 
     for number in next_number.. {
         let square = number as u64 * number as u64;
