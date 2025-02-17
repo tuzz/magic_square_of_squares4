@@ -4,6 +4,16 @@ use std::sync::{Arc, Mutex};
 #[derive(Clone, Default)]
 pub struct SharedVec(pub Arc<Mutex<Vec<u32>>>);
 
+impl SharedVec {
+    pub fn into_inner(self) -> Vec<u32> {
+        Mutex::into_inner(Arc::into_inner(self.0).unwrap()).unwrap()
+    }
+
+    pub fn push(&self, number: u32) {
+        self.0.lock().unwrap().push(number);
+    }
+}
+
 impl Serialize for SharedVec {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         self.0.lock().unwrap().serialize(serializer)

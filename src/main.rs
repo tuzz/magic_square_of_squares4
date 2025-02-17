@@ -9,7 +9,6 @@ use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
 use std::simd::Simd;
-use std::sync::{Arc, Mutex};
 
 const SIMD_LANES: usize = 64;
 
@@ -24,16 +23,15 @@ fn main() {
             let center_square = center as u64 * center as u64;
             let center_sum = center_square + center_square;
 
-            if center_sum > square { break; }
-            centers_to_check.pop_front();
-
+            if center_sum > square { break; } else { centers_to_check.pop_front(); }
             let center_class = (center_square % 72 / 24) as usize;
+
             let complement_class = (6 - center_class) % 3;
-
             let sums = &mut sums_by_class[complement_class];
-            let Some(SharedVec(numbers)) = sums.remove(&hash(center_sum)) else { continue };
 
-            let numbers = Mutex::into_inner(Arc::into_inner(numbers).unwrap()).unwrap();
+            let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
+            let numbers = numbers.into_inner();
+
             // println!("{}, {:?}", center, numbers);
         }
 
@@ -57,7 +55,7 @@ fn main() {
                 let sum_vector = square_vector + Simd::from_slice(chunk);
                 for hash in parallel_hash(sum_vector).as_array() {
                     if let Some(vec) = sums.get(hash) {
-                        vec.0.lock().unwrap().push(number);
+                        vec.push(number);
                     }
                 }
             });
@@ -65,7 +63,7 @@ fn main() {
             for &square2 in remainder {
                 let sum = square + square2;
                 if let Some(vec) = sums.get_mut(&hash(sum)) {
-                    vec.0.lock().unwrap().push(number);
+                    vec.push(number);
                 }
             }
         });
