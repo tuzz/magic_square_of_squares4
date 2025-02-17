@@ -8,3 +8,4 @@ nohash = "*"
 rayon = "*"
 bincode = "*"
 serde = { version = "*", features = ["derive"] }
+primal = "*"
