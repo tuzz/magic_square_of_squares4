@@ -4,6 +4,7 @@ mod checkpoints;
 mod hashing;
 mod shared_vec;
 mod graph;
+mod patterns;
 
 use rayon::prelude::*;
 use primal::Sieve;
@@ -11,6 +12,7 @@ use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
 use graph::*;
+use patterns::*;
 use std::simd::Simd;
 
 const SIMD_LANES: usize = 64;
@@ -19,7 +21,9 @@ const FILTER_BY_PRIMES: bool = true;
 
 fn main() {
     let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default(true);
+
     let sieve = Sieve::new(if FILTER_BY_PRIMES { u32::MAX as usize } else { 0 });
+    let patterns = Patterns::new();
 
     for number in next_number.. {
         let square = number as u64 * number as u64;

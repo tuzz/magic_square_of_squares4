@@ -48,17 +48,6 @@ pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> (DiGraph<
             graph.add_edge(square1_node, magic_sum_node, ());
             graph.add_edge(square2_node, magic_sum_node, ());
             graph.add_edge(remainder_node, magic_sum_node, ());
-            graph.add_edge(square2_node, square1_node, ());
-
-            match square1 > remainder {
-                true => graph.add_edge(square1_node, remainder_node, ()),
-                false => graph.add_edge(remainder_node, square1_node, ()),
-            };
-
-            match square2 > remainder {
-                true => graph.add_edge(square2_node, remainder_node, ()),
-                false => graph.add_edge(remainder_node, square2_node, ()),
-            };
         }
     }
 
