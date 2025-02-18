@@ -3,12 +3,14 @@
 mod checkpoints;
 mod hashing;
 mod shared_vec;
+mod detection;
 
 use rayon::prelude::*;
 use primal::Sieve;
 use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
+use detection::*;
 use std::simd::Simd;
 
 const SIMD_LANES: usize = 64;
@@ -39,9 +41,7 @@ fn main() {
             let sums = &mut sums_by_class[complement_class];
 
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
-            let numbers = numbers.into_inner();
-
-            // println!("{}, {:?}", center, numbers);
+            detect_magic_squares(center_square, numbers.into_inner());
         }
 
         let center_sum = square + square;
