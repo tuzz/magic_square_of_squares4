@@ -1,7 +1,7 @@
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
 
-pub fn detect_magic_squares(center_square: u64, bigger_numbers: Vec<u32>) {
+pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> DiGraph<u64, ()> {
     let center_sum = center_square + center_square;
     let magic_sum = center_sum + center_square;
 
@@ -57,12 +57,11 @@ pub fn detect_magic_squares(center_square: u64, bigger_numbers: Vec<u32>) {
         }
     }
 
-    #[cfg(feature = "render-graphs")]
-    write_svg(graph, magic_sum);
+    graph
 }
 
 #[cfg(feature = "render-graphs")]
-fn write_svg(graph: DiGraph<u64, ()>, magic_sum: u64) {
+pub fn write_svg(graph: &DiGraph<u64, ()>, center_square: u64) {
     let dot_config = petgraph::dot::Config::EdgeNoLabel;
     let svg_format = graphviz_rust::cmd::Format::Svg.into();
 
@@ -70,7 +69,7 @@ fn write_svg(graph: DiGraph<u64, ()>, magic_sum: u64) {
     let svg_graph = graphviz_rust::exec_dot(dot_graph, vec![svg_format]).unwrap();
 
     let kind = if crate::FILTER_BY_PRIMES { "filtered" } else { "unfiltered" };
-    let filename = format!("graphs/magic_sum_{}.{}.svg", magic_sum, kind);
+    let filename = format!("graphs/magic_sum_{}.{}.svg", center_square * 3, kind);
 
     const CREATED_DIR: std::cell::OnceCell<()> = std::cell::OnceCell::new();
     CREATED_DIR.get_or_init(|| { let _ = std::fs::create_dir_all("graphs"); });

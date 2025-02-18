@@ -12,6 +12,10 @@ impl SharedVec {
     pub fn push(&self, number: u32) {
         self.0.lock().unwrap().push(number);
     }
+
+    pub fn len(&self) -> usize {
+        self.0.lock().unwrap().len()
+    }
 }
 
 impl Serialize for SharedVec {

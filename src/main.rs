@@ -3,14 +3,14 @@
 mod checkpoints;
 mod hashing;
 mod shared_vec;
-mod detection;
+mod graph;
 
 use rayon::prelude::*;
 use primal::Sieve;
 use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
-use detection::*;
+use graph::*;
 use std::simd::Simd;
 
 const SIMD_LANES: usize = 64;
@@ -41,7 +41,10 @@ fn main() {
             let sums = &mut sums_by_class[complement_class];
 
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
-            detect_magic_squares(center_square, numbers.into_inner());
+            if numbers.len() < 2 { continue; }
+
+            let graph = generate_graph(center_square, numbers.into_inner());
+            #[cfg(feature = "render-graphs")] write_svg(&graph, center_square);
         }
 
         let center_sum = square + square;
