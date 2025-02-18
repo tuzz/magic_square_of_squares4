@@ -1,13 +1,12 @@
 use bincode::{serialize, deserialize};
-use nohash::NoHashHasher;
-use std::collections::{HashMap, VecDeque};
-use std::hash::BuildHasherDefault;
+use std::collections::VecDeque;
 use std::fs::{read, write, copy};
 use crate::{CHECKPOINT_FREQUENCY, FILTER_BY_PRIMES};
 use crate::shared_vec::*;
+use crate::hashing::*;
 
 type SquaresByClass = [Vec<u64>; 3];
-type SumsByClass = [HashMap<u64, SharedVec, BuildHasherDefault::<NoHashHasher<u64>>>; 3];
+type SumsByClass = [NoHashMap<u64, SharedVec>; 3];
 type CentersToCheck = VecDeque<u32>;
 type NextCheckpoint = u64;
 type NextNumber = u32;
@@ -29,7 +28,7 @@ pub fn read_checkpoint_or_default(log: bool) -> (SquaresByClass, SumsByClass, Ce
         },
         Err(_) => {
             let vec = Vec::with_capacity(1_000_000);
-            let map = HashMap::with_capacity_and_hasher(333_333, BuildHasherDefault::<NoHashHasher<u64>>::default());
+            let map = NoHashMap::with_capacity_and_hasher(333_333, BuildHasherDefault::<NoHashHasher<u64>>::default());
 
             let squares_by_class = [vec.clone(), vec.clone(), vec];
             let sums_by_class = [map.clone(), map.clone(), map];

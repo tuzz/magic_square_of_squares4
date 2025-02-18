@@ -1,5 +1,10 @@
-use crate::SIMD_LANES;
+pub use nohash::NoHashHasher;
+pub use std::collections::HashMap;
+pub use std::hash::BuildHasherDefault;
 use std::simd::Simd;
+use crate::SIMD_LANES;
+
+pub type NoHashMap<K, V> = HashMap<K, V, BuildHasherDefault::<NoHashHasher<K>>>;
 
 const PRIME: u64 = 11400714785074694791;
 const PRIME_VECTOR: Simd::<u64, SIMD_LANES> = Simd::splat(PRIME);
