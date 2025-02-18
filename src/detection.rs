@@ -2,8 +2,6 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
 
 pub fn detect_magic_squares(center_square: u64, bigger_numbers: Vec<u32>) {
-    if bigger_numbers.len() < 4 { return; } // TODO
-
     let center_sum = center_square + center_square;
     let magic_sum = center_sum + center_square;
 
@@ -30,7 +28,7 @@ pub fn detect_magic_squares(center_square: u64, bigger_numbers: Vec<u32>) {
             let remainder = (magic_sum - square1).saturating_sub(square2);
             if remainder == 0 { break; }
 
-            let remainder_node = nodes.entry(remainder).or_insert_with(|| {
+            let remainder_node = *nodes.entry(remainder).or_insert_with(|| {
                 let node = graph.add_node(remainder);
                 let sqrt = remainder.isqrt();
 
@@ -44,7 +42,18 @@ pub fn detect_magic_squares(center_square: u64, bigger_numbers: Vec<u32>) {
 
             graph.add_edge(square1_node, magic_sum_node, ());
             graph.add_edge(square2_node, magic_sum_node, ());
-            graph.add_edge(*remainder_node, magic_sum_node, ());
+            graph.add_edge(remainder_node, magic_sum_node, ());
+            graph.add_edge(square2_node, square1_node, ());
+
+            match square1 > remainder {
+                true => graph.add_edge(square1_node, remainder_node, ()),
+                false => graph.add_edge(remainder_node, square1_node, ()),
+            };
+
+            match square2 > remainder {
+                true => graph.add_edge(square2_node, remainder_node, ()),
+                false => graph.add_edge(remainder_node, square2_node, ()),
+            };
         }
     }
 
