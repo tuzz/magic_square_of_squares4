@@ -51,22 +51,24 @@ pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> (DiGraph<
         }
     }
 
+    #[cfg(feature = "render-graphs")] {
+        let kind = if crate::FILTER_BY_PRIMES { "filtered" } else { "unfiltered" };
+        write_svg(&graph, &format!("magic_sum_{}.{}.svg", magic_sum, kind))
+    }
+
     (graph, num_extra_squares)
 }
 
 #[cfg(feature = "render-graphs")]
-pub fn write_svg(graph: &DiGraph<u64, ()>, center_square: u64) {
+pub fn write_svg(graph: &DiGraph<u64, ()>, filename: &str) {
     let dot_config = petgraph::dot::Config::EdgeNoLabel;
     let svg_format = graphviz_rust::cmd::Format::Svg.into();
 
     let dot_graph = format!("{:?}", petgraph::dot::Dot::with_config(&graph, &[dot_config]));
     let svg_graph = graphviz_rust::exec_dot(dot_graph, vec![svg_format]).unwrap();
 
-    let kind = if crate::FILTER_BY_PRIMES { "filtered" } else { "unfiltered" };
-    let filename = format!("graphs/magic_sum_{}.{}.svg", center_square * 3, kind);
-
     const CREATED_DIR: std::cell::OnceCell<()> = std::cell::OnceCell::new();
     CREATED_DIR.get_or_init(|| { let _ = std::fs::create_dir_all("graphs"); });
 
-    std::fs::write(filename, svg_graph).unwrap();
+    std::fs::write(format!("graphs/{}", filename), svg_graph).unwrap();
 }

@@ -48,7 +48,6 @@ fn main() {
             if numbers.len() < 2 { continue; }
 
             let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
-            #[cfg(feature = "render-graphs")] write_svg(&graph, center_square);
         }
 
         let center_sum = square + square;

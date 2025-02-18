@@ -55,6 +55,13 @@ impl Patterns {
             Self::with_constraints(&graph, &cells, &equations, vec![], Some(8)), // Secondary diagonal incorrect.
         ];
 
+        #[cfg(feature = "render-graphs")] {
+            crate::write_svg(&magic_square_of_squares, &format!("_magic_square_of_squares.svg"));
+            one_cell_not_square.iter().enumerate().for_each(|(i, g)| crate::write_svg(&g, &format!("_one_cell_not_square_{}.svg", i)));
+            two_cells_not_square.iter().enumerate().for_each(|(i, g)| crate::write_svg(&g, &format!("_two_cells_not_square_{}.svg", i)));
+            one_sum_incorrect.iter().enumerate().for_each(|(i, g)| crate::write_svg(&g, &format!("_one_sum_incorrect_{}.svg", i)));
+        }
+
         Self { magic_square_of_squares, one_cell_not_square, two_cells_not_square, one_sum_incorrect }
     }
 
