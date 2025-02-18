@@ -1,7 +1,7 @@
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
 
-pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> DiGraph<u64, ()> {
+pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> (DiGraph<u64, ()>, usize) {
     let center_sum = center_square + center_square;
     let magic_sum = center_sum + center_square;
 
@@ -13,6 +13,7 @@ pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> DiGraph<u
 
     let mut graph = DiGraph::<u64, ()>::new();
     let mut nodes: HashMap<u64, NodeIndex> = HashMap::with_capacity(num_squares + num_squares * num_squares);
+    let mut num_extra_squares = 0;
 
     let ordered_nodes = ordered_squares.iter().map(|&square| {
         let node = graph.add_node(square);
@@ -30,10 +31,14 @@ pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> DiGraph<u
 
             let remainder_node = *nodes.entry(remainder).or_insert_with(|| {
                 let node = graph.add_node(remainder);
-                let sqrt = remainder.isqrt();
 
+                let sqrt = remainder.isqrt();
                 let is_square = sqrt * sqrt == remainder;
-                if is_square { graph.add_edge(node, node, ()); }
+
+                if is_square {
+                    graph.add_edge(node, node, ());
+                    num_extra_squares += 1;
+                }
 
                 node
             });
@@ -57,7 +62,7 @@ pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> DiGraph<u
         }
     }
 
-    graph
+    (graph, num_extra_squares)
 }
 
 #[cfg(feature = "render-graphs")]

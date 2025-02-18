@@ -43,7 +43,7 @@ fn main() {
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
             if numbers.len() < 2 { continue; }
 
-            let graph = generate_graph(center_square, numbers.into_inner());
+            let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
             #[cfg(feature = "render-graphs")] write_svg(&graph, center_square);
         }
 
