@@ -34,7 +34,7 @@ fn main() {
             if !primes.map(|p| p % 8).all(|r| r == 1 || r == 5 || r == 7) { continue; }
         }
 
-        while let Some(&center) = centers_to_check.front() {
+        'outer: while let Some(&center) = centers_to_check.front() {
             let center_square = center as u64 * center as u64;
             let center_sum = center_square + center_square;
 
@@ -47,7 +47,26 @@ fn main() {
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
             if numbers.len() < 2 { continue; }
 
-            let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
+            let numbers = numbers.into_inner();
+            let magic_sum = center_sum + center_square;
+
+            let bigger_squares = numbers.iter().map(|&n| n as u64 * n as u64);
+            let smaller_squares = bigger_squares.clone().map(|s| center_sum - s);
+            let ordered_squares = smaller_squares.rev().chain(bigger_squares).collect::<Vec<_>>();
+
+            for (i, &square1) in ordered_squares.iter().enumerate() {
+                for &square2 in &ordered_squares[i + 1..] {
+                    let remainder = (magic_sum - square1).saturating_sub(square2);
+                    if remainder == 0 { break; }
+
+                    if let Ok(_) = ordered_squares.binary_search(&remainder) {
+                        println!("{}, {:?}, {}, {}", magic_sum, numbers, square1, square2);
+                        continue 'outer;
+                    }
+                }
+            }
+
+            //let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
         }
 
         let center_sum = square + square;
