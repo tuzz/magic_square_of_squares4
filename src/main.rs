@@ -4,6 +4,7 @@ mod checkpoints;
 mod hashing;
 mod shared_vec;
 mod graph;
+mod graph_v2;
 mod patterns;
 
 use rayon::prelude::*;
@@ -12,6 +13,7 @@ use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
 use graph::*;
+use graph_v2::*;
 use patterns::*;
 use std::simd::Simd;
 
@@ -24,6 +26,7 @@ fn main() {
 
     let sieve = Sieve::new(if FILTER_BY_PRIMES { u32::MAX as usize } else { 0 });
     let patterns = Patterns::new();
+    let mut graph = Graph::new();
 
     for number in next_number.. {
         let square = number as u64 * number as u64;
@@ -47,7 +50,8 @@ fn main() {
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
             if numbers.len() < 2 { continue; }
 
-            let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
+            graph.generate(center_square, numbers.into_inner());
+            //let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
         }
 
         let center_sum = square + square;
