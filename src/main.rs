@@ -3,6 +3,7 @@
 mod checkpoints;
 mod hashing;
 mod shared_vec;
+mod magic_sums;
 mod graph;
 mod graph_v2;
 mod patterns;
@@ -12,6 +13,7 @@ use primal::Sieve;
 use checkpoints::*;
 use hashing::*;
 use shared_vec::*;
+use magic_sums::*;
 use graph::*;
 use graph_v2::*;
 use patterns::*;
