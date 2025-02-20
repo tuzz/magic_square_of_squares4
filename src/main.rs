@@ -5,7 +5,7 @@ mod hashing;
 mod shared_vec;
 mod magic_sums;
 mod graph;
-mod graph_v2;
+mod expander;
 mod patterns;
 
 use rayon::prelude::*;
@@ -15,7 +15,7 @@ use hashing::*;
 use shared_vec::*;
 use magic_sums::*;
 use graph::*;
-use graph_v2::*;
+use expander::*;
 use patterns::*;
 use std::simd::Simd;
 
@@ -28,7 +28,7 @@ fn main() {
 
     let sieve = Sieve::new(if FILTER_BY_PRIMES { u32::MAX as usize } else { 0 });
     let patterns = Patterns::new();
-    let mut graph = Graph::new();
+    let mut expander = Expander::new();
 
     for number in next_number.. {
         let square = number as u64 * number as u64;
@@ -52,7 +52,7 @@ fn main() {
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
             if numbers.len() < 2 { continue; }
 
-            graph.generate(center_square, numbers.into_inner(), &squares);
+            let magic_sums = expander.expand(center_square, numbers.into_inner(), &squares);
             //let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
         }
 

@@ -1,7 +1,7 @@
 use crate::MagicSums;
 use crate::hashing::*;
 
-pub struct Graph {
+pub struct Expander {
     magic_sums: MagicSums,
     ordered_squares: Vec<(Candidate, ElementIndex)>,
     additions1: Vec<(Candidate, ElementIndex, IsSquare)>,
@@ -14,7 +14,7 @@ type ElementIndex = usize;
 type IsSquare = bool;
 type Occurences = usize;
 
-impl Graph {
+impl Expander {
     pub fn new() -> Self {
         Self {
             ordered_squares: vec![],
@@ -25,7 +25,7 @@ impl Graph {
         }
     }
 
-    pub fn generate(&mut self, center_square: u64, bigger_numbers: Vec<u32>, squares: &NoHashSet<u64>) {
+    pub fn expand(&mut self, center_square: u64, bigger_numbers: Vec<u32>, squares: &NoHashSet<u64>) -> &MagicSums {
         self.magic_sums.clear();
         self.ordered_squares.clear();
         self.additions1.clear();
@@ -117,5 +117,6 @@ impl Graph {
         }
 
         self.magic_sums.remove_if_less_than_two_partners();
+        &self.magic_sums // TODO: return num_extra_squares?
     }
 }
