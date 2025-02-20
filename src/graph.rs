@@ -8,6 +8,9 @@ pub fn generate_graph(center_square: u64, magic_sums: &MagicSums) -> DiGraph<u64
     let magic_sum = center_square * 3;
 
     let nodes = magic_sums.elements.iter().map(|element| {
+        if center_square == 180625 {
+        println!("{}: {}", element.number, element.partners.len());
+        }
         let node = graph.add_node(element.number);
 
         if element.is_square {
@@ -28,12 +31,15 @@ pub fn generate_graph(center_square: u64, magic_sums: &MagicSums) -> DiGraph<u64
             if remainder > element.number { continue; }
 
             let partner1_node = nodes[p];
-            let partner2_node = nodes[*magic_sums.lookup.get(&hash(remainder)).unwrap()];
-            let sum_node = graph.add_node(0);
 
-            graph.add_edge(this_node, sum_node, ());
-            graph.add_edge(partner1_node, sum_node, ());
-            graph.add_edge(partner2_node, sum_node, ());
+            if let Some(j) = magic_sums.lookup.get(&hash(remainder)) {
+                let partner2_node = nodes[*j];
+                let sum_node = graph.add_node(0);
+
+                graph.add_edge(this_node, sum_node, ());
+                graph.add_edge(partner1_node, sum_node, ());
+                graph.add_edge(partner2_node, sum_node, ());
+            }
         }
     }
 

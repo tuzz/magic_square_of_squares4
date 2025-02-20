@@ -1,10 +1,10 @@
 use petgraph::graph::{DiGraph, NodeIndex};
 
 pub struct Patterns {
-    magic_square_of_squares: DiGraph<u64, ()>,
-    one_cell_not_square: Vec<DiGraph<u64, ()>>,
-    two_cells_not_square: Vec<DiGraph<u64, ()>>,
-    one_sum_incorrect: Vec<DiGraph<u64, ()>>,
+    pub magic_square_of_squares: DiGraph<u64, ()>,
+    pub one_cell_not_square: Vec<DiGraph<u64, ()>>,
+    pub two_cells_not_square: Vec<DiGraph<u64, ()>>,
+    pub one_sum_incorrect: Vec<DiGraph<u64, ()>>,
 }
 
 impl Patterns {
@@ -39,14 +39,14 @@ impl Patterns {
         ];
 
         let two_cells_not_square = vec![
-            Self::with_constraints(&graph, &cells, &equations, vec![4, 7], None), // Center and bottom-middle are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![4, 8], None), // Center and bottom-right are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![1, 7], None), // Top and bottom-middle are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![5, 7], None), // Middle-right and bottom-middle are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![2, 7], None), // Top-right and bottom-middle are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![7, 8], None), // Bottom-middle and bottom-right are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![6, 8], None), // Bottom-left and bottom-right are not square.
-            Self::with_constraints(&graph, &cells, &equations, vec![2, 6], None), // Top-right and bottom-left are not square.
+//            Self::with_constraints(&graph, &cells, &equations, vec![4, 7], None), // Center and bottom-middle are not square.
+//            Self::with_constraints(&graph, &cells, &equations, vec![4, 8], None), // Center and bottom-right are not square.
+//            Self::with_constraints(&graph, &cells, &equations, vec![1, 7], None), // Top and bottom-middle are not square.
+            Self::with_constraints(&graph, &cells, &equations, vec![2, 7], None), // Top-right and bottom-middle are not square.    // pattern 4
+            Self::with_constraints(&graph, &cells, &equations, vec![5, 7], None), // Middle-right and bottom-middle are not square. // pattern 2
+            Self::with_constraints(&graph, &cells, &equations, vec![7, 8], None), // Bottom-middle and bottom-right are not square. // pattern 3
+//            Self::with_constraints(&graph, &cells, &equations, vec![6, 8], None), // Bottom-left and bottom-right are not square.
+            Self::with_constraints(&graph, &cells, &equations, vec![2, 6], None), // Top-right and bottom-left are not square.      // pattern 6
         ];
 
         let one_sum_incorrect = vec![

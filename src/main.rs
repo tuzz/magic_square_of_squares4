@@ -7,6 +7,7 @@ mod magic_sums;
 mod graph;
 mod expander;
 mod patterns;
+mod matching;
 
 use rayon::prelude::*;
 use primal::Sieve;
@@ -17,6 +18,7 @@ use magic_sums::*;
 use graph::*;
 use expander::*;
 use patterns::*;
+use matching::*;
 use std::simd::Simd;
 
 const SIMD_LANES: usize = 64;
@@ -54,6 +56,7 @@ fn main() {
 
             let magic_sums = expander.expand(center_square, numbers.into_inner(), &squares);
             let graph = generate_graph(center_square, magic_sums);
+            match_subgraphs(center_square, &graph, &patterns);
         }
 
         let center_sum = square + square;

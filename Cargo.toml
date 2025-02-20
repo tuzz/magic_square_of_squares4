@@ -9,8 +9,9 @@ rayon = "*"
 bincode = "*"
 serde = { version = "*", features = ["derive"] }
 primal = "*"
-petgraph = "*"
 graphviz-rust = { version = "*", optional = true }
+vf2 = "*"
+petgraph = "*"
 
 [features]
 render-graphs = ["graphviz-rust"]
