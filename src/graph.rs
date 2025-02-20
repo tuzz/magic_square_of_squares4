@@ -1,53 +1,39 @@
 use petgraph::graph::{DiGraph, NodeIndex};
+use crate::MagicSums;
+use crate::hashing::*;
 use std::collections::HashMap;
 
-pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> (DiGraph<u64, ()>, usize) {
-    let center_sum = center_square + center_square;
-    let magic_sum = center_sum + center_square;
-
-    let bigger_squares = bigger_numbers.iter().map(|&n| n as u64 * n as u64).collect::<Vec<_>>();
-    let smaller_squares = bigger_squares.iter().map(|&s| center_sum - s).collect::<Vec<_>>();
-
-    let ordered_squares = smaller_squares.iter().rev().chain(&bigger_squares).copied().collect::<Vec<_>>();
-    let num_squares = ordered_squares.len();
-
+pub fn generate_graph(center_square: u64, magic_sums: &MagicSums) -> DiGraph<u64, ()> {
     let mut graph = DiGraph::<u64, ()>::new();
-    let mut nodes: HashMap<u64, NodeIndex> = HashMap::with_capacity(num_squares + num_squares * num_squares);
-    let mut num_extra_squares = 0;
+    let magic_sum = center_square * 3;
 
-    let ordered_nodes = ordered_squares.iter().map(|&square| {
-        let node = graph.add_node(square);
+    let nodes = magic_sums.elements.iter().map(|element| {
+        let node = graph.add_node(element.number);
 
-        nodes.insert(square, node);
-        graph.add_edge(node, node, ());
+        if element.is_square {
+            graph.add_edge(node, node, ());
+        }
 
         node
     }).collect::<Vec<_>>();
 
-    for (i, (&square1, &square1_node)) in ordered_squares.iter().zip(&ordered_nodes).enumerate() {
-        for (&square2, &square2_node) in ordered_squares[i + 1..].iter().zip(&ordered_nodes[i + 1..]) {
-            let remainder = (magic_sum - square1).saturating_sub(square2);
-            if remainder == 0 { break; }
+    for (i, element) in magic_sums.elements.iter().enumerate() {
+        let this_node = nodes[i];
 
-            let remainder_node = *nodes.entry(remainder).or_insert_with(|| {
-                let node = graph.add_node(remainder);
+        for &p in &element.partners {
+            let partner = &magic_sums.elements[p];
+            if partner.number > element.number { continue; }
 
-                let sqrt = remainder.isqrt();
-                let is_square = sqrt * sqrt == remainder;
+            let remainder = magic_sum - element.number - partner.number;
+            if remainder > element.number { continue; }
 
-                if is_square {
-                    graph.add_edge(node, node, ());
-                    num_extra_squares += 1;
-                }
+            let partner1_node = nodes[p];
+            let partner2_node = nodes[*magic_sums.lookup.get(&hash(remainder)).unwrap()];
+            let sum_node = graph.add_node(0);
 
-                node
-            });
-
-            let magic_sum_node = graph.add_node(0);
-
-            graph.add_edge(square1_node, magic_sum_node, ());
-            graph.add_edge(square2_node, magic_sum_node, ());
-            graph.add_edge(remainder_node, magic_sum_node, ());
+            graph.add_edge(this_node, sum_node, ());
+            graph.add_edge(partner1_node, sum_node, ());
+            graph.add_edge(partner2_node, sum_node, ());
         }
     }
 
@@ -56,7 +42,7 @@ pub fn generate_graph(center_square: u64, bigger_numbers: Vec<u32>) -> (DiGraph<
         write_svg(&graph, &format!("magic_sum_{}.{}.svg", magic_sum, kind))
     }
 
-    (graph, num_extra_squares)
+    graph
 }
 
 #[cfg(feature = "render-graphs")]

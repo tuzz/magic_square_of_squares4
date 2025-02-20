@@ -53,7 +53,7 @@ fn main() {
             if numbers.len() < 2 { continue; }
 
             let magic_sums = expander.expand(center_square, numbers.into_inner(), &squares);
-            //let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
+            let graph = generate_graph(center_square, magic_sums);
         }
 
         let center_sum = square + square;

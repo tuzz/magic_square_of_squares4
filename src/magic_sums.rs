@@ -5,15 +5,15 @@ use std::mem::swap;
 
 #[derive(Default)]
 pub struct MagicSums {
-    elements: Vec<Element>,
-    lookup: NoHashMap<u64, usize>,
+    pub elements: Vec<Element>,
+    pub lookup: NoHashMap<u64, usize>,
     tmp: Vec<usize>,
 }
 
-struct Element {
-    number: u64,
-    is_square: bool,
-    partners: Vec<usize>,
+pub struct Element {
+    pub number: u64,
+    pub is_square: bool,
+    pub partners: Vec<usize>,
 }
 
 impl MagicSums {
