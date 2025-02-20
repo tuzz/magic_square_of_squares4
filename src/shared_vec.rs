@@ -5,16 +5,8 @@ use std::sync::{Arc, Mutex};
 pub struct SharedVec(pub Arc<Mutex<Vec<u32>>>);
 
 impl SharedVec {
-    pub fn into_inner(self) -> Vec<u32> {
-        Mutex::into_inner(Arc::into_inner(self.0).unwrap()).unwrap()
-    }
-
     pub fn push(&self, number: u32) {
         self.0.lock().unwrap().push(number);
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.lock().unwrap().len()
     }
 }
 
