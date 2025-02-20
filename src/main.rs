@@ -24,7 +24,7 @@ const CHECKPOINT_FREQUENCY: u64 = 10_000_000_000_000;
 const FILTER_BY_PRIMES: bool = true;
 
 fn main() {
-    let (mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default(true);
+    let (mut squares, mut squares_by_class, mut sums_by_class, mut centers_to_check, mut next_checkpoint, next_number) = read_checkpoint_or_default(true);
 
     let sieve = Sieve::new(if FILTER_BY_PRIMES { u32::MAX as usize } else { 0 });
     let patterns = Patterns::new();
@@ -52,7 +52,7 @@ fn main() {
             let Some(numbers) = sums.remove(&hash(center_sum)) else { continue };
             if numbers.len() < 2 { continue; }
 
-            graph.generate(center_square, numbers.into_inner());
+            graph.generate(center_square, numbers.into_inner(), &squares);
             //let (graph, num_extra_squares) = generate_graph(center_square, numbers.into_inner());
         }
 
@@ -89,11 +89,12 @@ fn main() {
             }
         });
 
+        squares.insert(square);
         squares_by_class[square_class].push(square);
 
         if square >= next_checkpoint {
-            let reloaded = write_checkpoint(squares_by_class, sums_by_class, centers_to_check, next_checkpoint, number);
-            (squares_by_class, sums_by_class, centers_to_check) = reloaded;
+            let reloaded = write_checkpoint(squares, squares_by_class, sums_by_class, centers_to_check, next_checkpoint, number);
+            (squares, squares_by_class, sums_by_class, centers_to_check) = reloaded;
             next_checkpoint += CHECKPOINT_FREQUENCY;
         }
     }

@@ -1,3 +1,4 @@
+use crate::hashing::*;
 use std::collections::HashMap;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::mem::swap;
@@ -5,7 +6,7 @@ use std::mem::swap;
 #[derive(Default)]
 pub struct MagicSums {
     elements: Vec<Element>,
-    lookup: HashMap<u64, usize>,
+    lookup: NoHashMap<u64, usize>,
     tmp: Vec<usize>,
 }
 
@@ -20,7 +21,7 @@ impl MagicSums {
         where F: Fn() -> bool,
               G: Fn(bool) -> bool
     {
-        match self.lookup.entry(number) {
+        match self.lookup.entry(hash(number)) {
             Occupied(entry) => {
                 let index = *entry.get();
                 let is_square = self.elements[index].is_square;
@@ -58,7 +59,7 @@ impl MagicSums {
                 let element = &mut self.elements[i];
 
                 if element.partners.len() == 1 {
-                    self.lookup.remove(&element.number);
+                    self.lookup.remove(&hash(element.number));
                     swap(&mut element.partners, &mut self.tmp);
 
                     for j in self.tmp.drain(..) {

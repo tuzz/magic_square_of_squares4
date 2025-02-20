@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use crate::MagicSums;
+use crate::hashing::*;
 
 pub struct Graph {
     magic_sums: MagicSums,
@@ -26,7 +25,7 @@ impl Graph {
         }
     }
 
-    pub fn generate(&mut self, center_square: u64, bigger_numbers: Vec<u32>) {
+    pub fn generate(&mut self, center_square: u64, bigger_numbers: Vec<u32>, squares: &NoHashSet<u64>) {
         self.magic_sums.clear();
         self.ordered_squares.clear();
         self.additions1.clear();
@@ -53,7 +52,7 @@ impl Graph {
                 if candidate == 0 { if j == 0 { break 'outer; } else { break; } }
 
                 let condition = |_| true;
-                let option = self.magic_sums.get_or_insert_element(candidate, || is_square(candidate), condition);
+                let option = self.magic_sums.get_or_insert_element(candidate, || squares.contains(&candidate), condition);
                 let (k, is_square) = option.unwrap();
 
                 self.magic_sums.add_partnership(i, j, k);
@@ -71,7 +70,7 @@ impl Graph {
                 if candidate == 0 { if j == 0 { break 'outer; } else { break; } }
 
                 let condition = |candidate_is_square| { candidate_is_square || addition_is_square };
-                let option = self.magic_sums.get_or_insert_element(candidate, || is_square(candidate), condition);
+                let option = self.magic_sums.get_or_insert_element(candidate, || squares.contains(&candidate), condition);
 
                 if let Some((k, _)) = option {
                     self.magic_sums.add_partnership(i, j, k);
@@ -80,7 +79,7 @@ impl Graph {
             }
         }
 
-        self.square_additions2.sort();
+        self.square_additions2.sort_by_key(|&(candidate, _)| candidate);
 
         'outer: for &(square, i) in &self.ordered_squares {
             let remainder = magic_sum - square;
@@ -90,7 +89,7 @@ impl Graph {
                 if candidate == 0 { if j == 0 { break 'outer; } else { break; } }
 
                 let condition = |candidate_is_square: bool| { !candidate_is_square };
-                let option = self.magic_sums.get_or_insert_element(candidate, || is_square(candidate), condition);
+                let option = self.magic_sums.get_or_insert_element(candidate, || squares.contains(&candidate), condition);
 
                 if let Some((k, _)) = option {
                     self.magic_sums.add_partnership(i, j, k);
@@ -99,7 +98,7 @@ impl Graph {
             }
         }
 
-        self.non_square_additions3.sort();
+        self.non_square_additions3.sort_by_key(|&(candidate, _)| candidate);
 
         'outer: for &(square, i) in &self.ordered_squares {
             let remainder = magic_sum - square;
@@ -109,15 +108,14 @@ impl Graph {
                 if candidate == 0 { if j == 0 { break 'outer; } else { break; } }
 
                 let condition = |candidate_is_square| candidate_is_square;
-                self.magic_sums.get_or_insert_element(candidate, || is_square(candidate), condition);
+                let option = self.magic_sums.get_or_insert_element(candidate, || squares.contains(&candidate), condition);
+
+                if let Some((k, _)) = option {
+                    self.magic_sums.add_partnership(i, j, k);
+                }
             }
         }
 
         self.magic_sums.remove_if_less_than_two_partners();
     }
-}
-
-fn is_square(number: u64) -> bool {
-    let root = number.isqrt();
-    root * root == number
 }

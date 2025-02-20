@@ -1,9 +1,10 @@
 pub use nohash::NoHashHasher;
-pub use std::collections::HashMap;
+pub use std::collections::{HashSet, HashMap};
 pub use std::hash::BuildHasherDefault;
 use std::simd::Simd;
 use crate::SIMD_LANES;
 
+pub type NoHashSet<V> = HashSet<V, BuildHasherDefault::<NoHashHasher<V>>>;
 pub type NoHashMap<K, V> = HashMap<K, V, BuildHasherDefault::<NoHashHasher<K>>>;
 
 const PRIME: u64 = 11400714785074694791;
