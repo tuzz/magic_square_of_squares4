@@ -41,27 +41,29 @@ fn main() {
 
             let Some(numbers) = sums.get(&hash(center_sum)) else { continue };
             let numbers = numbers.0.lock().unwrap();
+
             let magic_sum = center_sum + center_square;
+            let center_cell = Cell::new(center_square, magic_sum);
 
             numbers.par_iter().enumerate().for_each(|(i, &number1)| {
-                let square1 = number1 as u64 * number1 as u64;
-                let square2 = center_sum - square1;
+                let cell1 = Cell::new(number1 as u64 * number1 as u64, magic_sum);
+                let cell2 = Cell::new(center_sum - cell1.value, magic_sum);
 
                 numbers[i + 1..].par_iter().for_each(|&number2| {
-                    let square3 = number2 as u64 * number2 as u64;
-                    let square4 = center_sum - square3;
+                    let cell3 = Cell::new(number2 as u64 * number2 as u64, magic_sum);
+                    let cell4 = Cell::new(center_sum - cell3.value, magic_sum);
 
-                    check_pattern_2(&squares, magic_sum, center_square, square1, square2, square3, square4);
+                    check_pattern_2(&squares, &center_cell, &cell1, &cell2, &cell3, &cell4);
 
-                    check_patterns_3_4_and_6(&squares, magic_sum, center_square, square1, square2, square3, square4);
-                    check_patterns_3_4_and_6(&squares, magic_sum, center_square, square1, square2, square4, square3);
-                    check_patterns_3_4_and_6(&squares, magic_sum, center_square, square3, square4, square1, square2);
-                    check_patterns_3_4_and_6(&squares, magic_sum, center_square, square3, square4, square2, square1);
+                    check_patterns_3_4_and_6(&squares, &center_cell, &cell1, &cell2, &cell3, &cell4);
+                    check_patterns_3_4_and_6(&squares, &center_cell, &cell1, &cell2, &cell4, &cell3);
+                    check_patterns_3_4_and_6(&squares, &center_cell, &cell3, &cell4, &cell1, &cell2);
+                    check_patterns_3_4_and_6(&squares, &center_cell, &cell3, &cell4, &cell2, &cell1);
 
-                    check_pattern_5(&sums_by_class, magic_sum, center_square, square1, square2, square3, square4);
-                    check_pattern_5(&sums_by_class, magic_sum, center_square, square2, square3, square4, square1);
-                    check_pattern_5(&sums_by_class, magic_sum, center_square, square3, square4, square1, square2);
-                    check_pattern_5(&sums_by_class, magic_sum, center_square, square4, square1, square2, square3);
+                    check_pattern_5(&sums_by_class, &center_cell, &cell1, &cell2, &cell3, &cell4);
+                    check_pattern_5(&sums_by_class, &center_cell, &cell2, &cell3, &cell4, &cell1);
+                    check_pattern_5(&sums_by_class, &center_cell, &cell3, &cell4, &cell1, &cell2);
+                    check_pattern_5(&sums_by_class, &center_cell, &cell4, &cell1, &cell2, &cell3);
                 });
             });
         }
@@ -110,12 +112,10 @@ fn main() {
     }
 }
 
-fn check_pattern_2(squares: &NoHashSet<u64>, magic_sum: u64, center_square: u64, top_left: u64, bottom_right: u64, top_right: u64, bottom_left: u64) {
-    let magic_sum_minus_top_left = magic_sum - top_left;
-
-    let Some(top_middle) = magic_sum_minus_top_left.checked_sub(top_right) else { return };
-    let Some(middle_left) = magic_sum_minus_top_left.checked_sub(bottom_left) else { return };
-    let bottom_middle = magic_sum - bottom_left - bottom_right;
+fn check_pattern_2(squares: &NoHashSet<u64>, center: &Cell, top_left: &Cell, bottom_right: &Cell, top_right: &Cell, bottom_left: &Cell) {
+    let Some(top_middle) = top_left.magic_sum_minus_value.checked_sub(top_right.value) else { return };
+    let Some(middle_left) = top_left.magic_sum_minus_value.checked_sub(bottom_left.value) else { return };
+    let bottom_middle = bottom_left.magic_sum_minus_value - bottom_right.value;
 
     let mut num_squares = 5;
     if squares.contains(&top_middle) { num_squares += 1; }
@@ -123,51 +123,42 @@ fn check_pattern_2(squares: &NoHashSet<u64>, magic_sum: u64, center_square: u64,
     if squares.contains(&bottom_middle) { num_squares += 1; }
     if num_squares < 6 { return; }
 
-    let middle_right = magic_sum - middle_left - center_square;
+    let middle_right = center.magic_sum_minus_value - middle_left;
     if squares.contains(&middle_right) { num_squares += 1; }
     if num_squares < 7 { return; }
 
-    println!("{} | {} | {}", top_left, top_middle, top_right);
-    println!("{} | {} | {}", middle_left, center_square, middle_right);
-    println!("{} | {} | {}\n", bottom_left, bottom_middle, bottom_right);
+    println!("{} | {} | {}", top_left.value, top_middle, top_right.value);
+    println!("{} | {} | {}", middle_left, center.value, middle_right);
+    println!("{} | {} | {}\n", bottom_left.value, bottom_middle, bottom_right.value);
 }
 
-fn check_pattern_5(sums_by_class: &[NoHashMap<u64, SharedVec>; 3], magic_sum: u64, center_square: u64, top_middle: u64, bottom_middle: u64, middle_left: u64, middle_right: u64) {
-    let top_sum = magic_sum - top_middle;
-    let left_sum = magic_sum - middle_left;
-    let right_sum = magic_sum - middle_right;
-    let bottom_sum = magic_sum - bottom_middle;
-    let center_sum = magic_sum - center_square;
-
+fn check_pattern_5(sums_by_class: &[NoHashMap<u64, SharedVec>; 3], center: &Cell, top_middle: &Cell, bottom_middle: &Cell, middle_left: &Cell, middle_right: &Cell) {
     for sums in sums_by_class {
-        if let Some(numbers) = sums.get(&hash(top_sum)) {
+        if let Some(numbers) = sums.get(&hash(top_middle.magic_sum_minus_value)) {
             let numbers = numbers.0.lock().unwrap();
 
             for &number in numbers.iter() { // TODO: SIMD
                 let top_left = number as u64 * number as u64;
-                let top_right = top_sum - top_left;
+                let top_right = top_middle.magic_sum_minus_value - top_left;
 
-                let Some(bottom_left) = left_sum.checked_sub(top_left) else { continue };
-                let Some(bottom_right) = right_sum.checked_sub(top_right) else { continue };
-                if bottom_left + bottom_right != bottom_sum { continue };
-                if top_left + bottom_right != center_sum { continue; }
-                if top_right + bottom_left != center_sum { continue; }
+                let Some(bottom_left) = middle_left.magic_sum_minus_value.checked_sub(top_left) else { continue };
+                let Some(bottom_right) = middle_right.magic_sum_minus_value.checked_sub(top_right) else { continue };
+                if bottom_left + bottom_right != bottom_middle.magic_sum_minus_value { continue };
+                if top_left + bottom_right != center.magic_sum_minus_value { continue; }
+                if top_right + bottom_left != center.magic_sum_minus_value { continue; }
 
-                println!("{} | {} | {}", top_left, top_middle, top_right);
-                println!("{} | {} | {}", middle_left, center_square, middle_right);
-                println!("{} | {} | {}\n", bottom_left, bottom_middle, bottom_right);
+                println!("{} | {} | {}", top_left, top_middle.value, top_right);
+                println!("{} | {} | {}", middle_left.value, center.value, middle_right.value);
+                println!("{} | {} | {}\n", bottom_left, bottom_middle.value, bottom_right);
             }
         }
     }
 }
 
-fn check_patterns_3_4_and_6(squares: &NoHashSet<u64>, magic_sum: u64, center_square: u64, top_right: u64, bottom_left: u64, middle_left: u64, middle_right: u64) {
-    let magic_sum_minus_bottom_left = magic_sum - bottom_left;
-    let magic_sum_minus_top_right = magic_sum - top_right;
-
-    let Some(top_left) = magic_sum_minus_bottom_left.checked_sub(middle_left) else { return };
-    let Some(bottom_right) = magic_sum_minus_top_right.checked_sub(middle_right) else { return };
-    let Some(top_middle) = magic_sum_minus_top_right.checked_sub(top_left) else { return };
+fn check_patterns_3_4_and_6(squares: &NoHashSet<u64>, center: &Cell, top_right: &Cell, bottom_left: &Cell, middle_left: &Cell, middle_right: &Cell) {
+    let Some(top_left) = bottom_left.magic_sum_minus_value.checked_sub(middle_left.value) else { return };
+    let Some(bottom_right) = top_right.magic_sum_minus_value.checked_sub(middle_right.value) else { return };
+    let Some(top_middle) = top_right.magic_sum_minus_value.checked_sub(top_left) else { return };
 
     let mut num_squares = 5;
     if squares.contains(&top_left) { num_squares += 1; }
@@ -175,17 +166,25 @@ fn check_patterns_3_4_and_6(squares: &NoHashSet<u64>, magic_sum: u64, center_squ
     if squares.contains(&top_middle) { num_squares += 1; }
     if num_squares < 6 { return; }
 
-    let bottom_middle = magic_sum_minus_bottom_left - bottom_right;
+    let bottom_middle = bottom_left.magic_sum_minus_value - bottom_right;
     if squares.contains(&bottom_middle) { num_squares += 1; }
     if num_squares < 7 { return; }
 
     if HIDE_KNOWN_SOLUTION {
-        let k2 = magic_sum / 541_875;
+        let k2 = center.value / 180_625;
         let k = k2.isqrt();
         if k * k == k2 { return; }
     }
 
-    println!("{} | {} | {}", top_left, top_middle, top_right);
-    println!("{} | {} | {}", middle_left, center_square, middle_right);
-    println!("{} | {} | {}\n", bottom_left, bottom_middle, bottom_right);
+    println!("{} | {} | {}", top_left, top_middle, top_right.value);
+    println!("{} | {} | {}", middle_left.value, center.value, middle_right.value);
+    println!("{} | {} | {}\n", bottom_left.value, bottom_middle, bottom_right);
+}
+
+struct Cell { value: u64, magic_sum_minus_value: u64 }
+
+impl Cell {
+    pub fn new(value: u64, magic_sum: u64) -> Self {
+        Self { value, magic_sum_minus_value: magic_sum - value }
+    }
 }
